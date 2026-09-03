@@ -1,0 +1,4 @@
+ypbind: enabled
+rpcbind: enabled
+nfs-common: masked
+rpc-statd: enabled-runtime
