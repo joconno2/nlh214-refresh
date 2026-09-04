@@ -8,10 +8,12 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 REPO="$(cd "$HERE/.." && pwd)"
 
+# One image is cloned to the whole lab, so the baked hostname is just a base —
+# each machine self-names uniquely on first boot (see firstboot/run-provision.sh).
 BASE="${1:?path to ubuntu-24.04.x-desktop-amd64.iso}"
-HOSTNAME_NEW="${2:?hostname for this image, e.g. NL214-Lin01}"
+HOSTNAME_NEW="${2:-nlh214-box}"
 OUT="${3:-$HERE/iso/nlh214-autoinstall.iso}"
-PW_PLAIN="${CSADMIN_PW:-c\$@dm1n}"
+PW_PLAIN="${CSADMIN_PW:-password}"
 
 command -v xorriso >/dev/null || { echo "need xorriso"; exit 1; }
 [ -f "$HERE/pool/"*.deb ] 2>/dev/null || echo "[!] pool/ is empty — run fetch-offline-debs.sh first"
