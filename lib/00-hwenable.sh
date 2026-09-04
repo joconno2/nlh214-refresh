@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # hardware enablement for the MSI Aegis ZS2 (AMD Ryzen 9 9900X / B650 / RTX 5080 /
 # Realtek LAN + Wi-Fi 6E/7). Ubuntu 24.04 GA kernel 6.8 is too old for this silicon;
-# we move to the OEM 6.14 kernel + latest firmware + NVIDIA 570 (Blackwell) and
+# we move to the OEM kernel (6.17) + latest firmware + NVIDIA 580-open (Blackwell) and
 # carry Realtek dkms as a fallback for the NIC.
 #
 # Runs offline from the baked apt pool during autoinstall, or online if a NIC is up.
@@ -9,17 +9,21 @@ source "$(dirname "$(readlink -f "$0")")/common.sh"
 need_root
 
 POOL="${OFFLINE_POOL:-}"          # dir of .debs baked onto the USB; empty = use network
-offline_install() {               # install by name from pool or network
-  if [ -n "$POOL" ] && ls "$POOL"/*.deb >/dev/null 2>&1; then
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      -o Dir::Cache::Archives="$POOL" -o Acquire::Retries=0 "$@" \
-      || { warn "pool install of '$*' incomplete"; return 1; }
-  else
-    apt_install "$@"
-  fi
-}
 
-log "OEM 6.14 kernel (newest-hardware enablement on the LTS base)"
+# Offline path: bulk-install the whole pool with dpkg. apt can't resolve deps with no
+# network (no package indexes), but the pool already carries the full closure, so we
+# let dpkg topo-sort it — two passes to settle dkms/header ordering.
+if [ -n "$POOL" ] && ls "$POOL"/*.deb >/dev/null 2>&1; then
+  log "offline: installing $(ls "$POOL"/*.deb | wc -l) pooled debs via dpkg"
+  dpkg -i "$POOL"/*.deb >/dev/null 2>&1 || true
+  dpkg -i "$POOL"/*.deb 2>&1 | grep -iE "error|depend" | head || true
+  installed() { dpkg -l "$1" 2>/dev/null | grep -q "^ii"; }
+  offline_install() { for p in "$@"; do installed "$p" && return 0; done; warn "not in pool: $*"; return 1; }
+else
+  offline_install() { apt_install "$@"; }
+fi
+
+log "OEM kernel 6.17 (newest-hardware enablement on the LTS base)"
 offline_install linux-oem-24.04d || offline_install linux-oem-24.04c || \
   warn "OEM kernel not installed — falling back to whatever the ISO shipped"
 
