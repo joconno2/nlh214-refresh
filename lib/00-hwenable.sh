@@ -26,9 +26,9 @@ offline_install linux-oem-24.04d || offline_install linux-oem-24.04c || \
 log "latest linux-firmware (Wi-Fi 6E/7 + Realtek/AMD blobs)"
 offline_install linux-firmware
 
-log "NVIDIA 570 open modules (RTX 5080 / Blackwell)"
-offline_install nvidia-driver-570-open || offline_install nvidia-driver-570 \
-  || warn "nvidia 570 not installed — check Secure Boot / pool"
+log "NVIDIA open modules (RTX 5080 / Blackwell) — 580 current, 570 fallback"
+offline_install nvidia-driver-580-open || offline_install nvidia-driver-570-open \
+  || warn "nvidia driver not installed — check Secure Boot / pool"
 
 log "Realtek NIC dkms fallback (covers RTL8125/8126 if the in-kernel driver misses)"
 offline_install dkms build-essential || true

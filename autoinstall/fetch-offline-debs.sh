@@ -10,7 +10,7 @@ mkdir -p "$POOL"
 # Everything the GA kernel can't provide for the Aegis ZS2. Extras (r8126-dkms) are
 # best-effort — the container skips any not in noble.
 PKGS="linux-oem-24.04d linux-firmware dkms build-essential \
-nvidia-driver-570-open r8125-dkms r8126-dkms"
+nvidia-driver-580-open nvidia-driver-570-open r8125-dkms r8126-dkms"
 
 echo "[+] harvesting into $POOL via ubuntu:24.04 container"
 docker run --rm -v "$POOL:/pool" ubuntu:24.04 bash -c '
