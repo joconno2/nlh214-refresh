@@ -1,3 +1,7 @@
 *.swp
 *~
 .DS_Store
+# build artifacts — large, rebuilt from scripts, never committed
+autoinstall/pool/*.deb
+autoinstall/iso/*.iso
+autoinstall/iso/

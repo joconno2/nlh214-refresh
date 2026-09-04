@@ -1,0 +1,45 @@
+#cloud-config
+# Ubuntu 24.04.3 Desktop autoinstall for the NLH214 MSI Aegis ZS2 fleet.
+# Fully unattended. Offline-safe: the OEM kernel + NVIDIA + NIC drivers come from a
+# pool baked onto the USB, so a NIC the GA kernel can't see does not stall the install.
+# Lab software (NIS/NFS/swl/pcs/xpilot/editors) runs on first boot once on-campus.
+#
+# Placeholders {{HOSTNAME}} and {{PWHASH}} are filled by build-iso.sh.
+autoinstall:
+  version: 1
+  interactive-sections: []          # nothing prompts; fully automated
+
+  locale: en_US.UTF-8
+  keyboard: {layout: us}
+  timezone: America/New_York
+
+  identity:
+    realname: "CS Admin"
+    username: csadmin
+    hostname: "{{HOSTNAME}}"
+    password: "{{PWHASH}}"
+
+  ssh:
+    install-server: true
+    allow-pw: true
+
+  # Whole-disk Ubuntu. NOTE: these ship with Windows 11 preloaded; this WIPES it.
+  # For dual-boot (old lab behavior) swap to a manual layout — see README.
+  storage:
+    layout: {name: direct}
+
+  # No network refresh during install — the NIC may be dark until the OEM kernel.
+  # Everything hardware-critical is in the on-disk pool.
+  updates: security
+  package_update: false
+  package_upgrade: false
+
+  late-commands:
+    # copy the whole repo (provisioner + software + offline pool) onto the target
+    - mkdir -p /target/opt/nlh214-refresh
+    - cp -a /cdrom/nlh214-refresh/. /target/opt/nlh214-refresh/
+    # hardware enablement from the offline pool: OEM kernel, NVIDIA 570, firmware, NIC dkms
+    - curtin in-target --target=/target -- bash -c 'OFFLINE_POOL=/opt/nlh214-refresh/autoinstall/pool bash /opt/nlh214-refresh/lib/00-hwenable.sh'
+    # arm the first-boot provisioner (runs the lab stack online, on campus)
+    - cp /target/opt/nlh214-refresh/autoinstall/firstboot/nlh214-firstboot.service /target/etc/systemd/system/
+    - curtin in-target --target=/target -- systemctl enable nlh214-firstboot.service

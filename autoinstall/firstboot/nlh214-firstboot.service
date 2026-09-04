@@ -1,0 +1,13 @@
+[Unit]
+Description=NLH214 first-boot lab provisioner (runs once, needs campus network)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/var/lib/nlh214-provisioned
+
+[Service]
+Type=oneshot
+ExecStart=/opt/nlh214-refresh/autoinstall/firstboot/run-provision.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
