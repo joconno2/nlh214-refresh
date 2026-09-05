@@ -16,9 +16,10 @@ OUT="${3:-$HERE/iso/nlh214-autoinstall.iso}"
 PW_PLAIN="${CSADMIN_PW:-password}"
 
 command -v xorriso >/dev/null || { echo "need xorriso"; exit 1; }
-[ -f "$HERE/pool/"*.deb ] 2>/dev/null || echo "[!] pool/ is empty — run fetch-offline-debs.sh first"
+ls "$HERE/pool/"*.deb >/dev/null 2>&1 || echo "[!] pool/ is empty — run fetch-offline-debs.sh first"
 
-PWHASH="$(python3 -c "import crypt;print(crypt.crypt('$PW_PLAIN', crypt.mksalt(crypt.METHOD_SHA512)))")"
+# SHA-512 crypt hash (python's crypt module is gone in 3.13; openssl is always here)
+PWHASH="$(openssl passwd -6 "$PW_PLAIN")"
 
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 echo "[+] extracting $BASE"
