@@ -1,44 +1,68 @@
 # NLH214 lab refresh
 
-Self-contained provisioner for the NLH214 teaching-lab machines (FY26 refresh).
-Target OS: **Ubuntu 24.04 LTS**, dual-boot with Windows. Reference build pulled from the
-FY22 fleet on 2026-09-03 — see [BUILD.md](BUILD.md) for the full inventory and provenance.
+Unattended install USB + provisioner for the NLH214 teaching lab (FY26 refresh).
+Target hardware: **MSI Aegis ZS2 C9NVV-1277US** (Ryzen 9 9900X / B650 / RTX 5080 / Realtek
+LAN + Wi-Fi). Target OS: **Ubuntu 24.04.4 LTS**, whole-disk (wipes the preloaded Windows 11).
 
-## Why 24.04
-NIS/YP client, NFS, chezscheme, and racket are all in noble; new hardware needs the long
-support window (2029/2036 vs 22.04's April 2027). The only casualties of the newer OS are the
-32-bit libs the old Scheme stack links (Tcl/Tk 8.5, ncurses5) — those are **bundled in this
-repo**, so `swl`/`pcs` work on 24.04 identically to 22.04. NIS itself is deprecated and on the
-way out (whale AD migration planned); 24.04 is the last comfortable LTS for a NIS client.
+> 24.04's stock installer fails on this box — the GA 6.8 kernel is too old for the NIC and the
+> Blackwell GPU. This USB carries an OEM 6.17 kernel + NVIDIA 580 + NIC drivers **baked in as an
+> offline pool**, so it installs with no working network, then runs the lab provisioner on first
+> boot once the machine is on campus.
 
-## Provision a machine
-Jim installs Ubuntu 24.04 + names the box, then:
+## Install a machine (the USB workflow)
 
+**1. Build the USB image** (on cachy, one time):
 ```bash
-# from a machine that can reach the new box:
-rsync -a nlh214-refresh/ csadmin@<box>:/tmp/nlh214-refresh/
-ssh csadmin@<box> 'cd /tmp/nlh214-refresh && sudo ./provision.sh <hostname>'
+cd autoinstall
+./fetch-offline-debs.sh                                   # harvest driver pool (~1.3G, needs docker)
+# download an Ubuntu 24.04.4 Desktop ISO into autoinstall/iso/
+./build-iso.sh iso/ubuntu-24.04.4-desktop-amd64.iso nlh214-box
+# -> autoinstall/iso/nlh214-autoinstall.iso  (~7.5G)
 ```
 
-Run a single module by its number: `sudo ./provision.sh <hostname> 03`.
+**2. Write it to a USB** (≥16GB stick):
+```bash
+lsblk                                                     # identify the stick, e.g. /dev/sdb
+sudo dd if=autoinstall/iso/nlh214-autoinstall.iso of=/dev/sdX bs=4M status=progress oflag=sync
+```
 
-## What it installs
+**3. Boot the ZS2 from the USB:**
+- In BIOS, **disable Secure Boot** (the NVIDIA-open + dkms modules are unsigned).
+- Boot the USB. The install is **unattended**: it wipes the disk, installs Ubuntu + the OEM
+  kernel/NVIDIA/NIC drivers from the on-USB pool, and reboots into kernel 6.17 with GPU + NIC live.
+- Login `csadmin` / `password`. The box **self-names** `nlh214-<serial>`.
+
+**4. First boot on campus** runs the lab provisioner automatically (NIS/NFS/swl/pcs/xpilot/editors).
+Watch `/var/log/nlh214-firstboot.log`, then validate:
+```bash
+id <student>                 # NIS lookup works
+ls /home/CS_data/students    # NFS home mounted
+swl                          # SWL GUI window opens
+xpilots --help               # xpilot-ai runs
+nvidia-smi                   # RTX 5080 up
+```
+
+Details of the USB build internals: [autoinstall/README.md](autoinstall/README.md).
+
+## What the provisioner installs
+Runs on first boot (or manually: `sudo ./provision.sh <hostname>`). Reference build pulled from
+the FY22 fleet 2026-09-03 — see [BUILD.md](BUILD.md).
+
 | Module | Contents |
 |--------|----------|
+| `00-hwenable` | OEM 6.17 kernel, NVIDIA 580-open, linux-firmware, Realtek dkms (offline-pool aware) |
 | `01-base` | hostname, timezone, i386 multiarch, gcc/g++/make/gdb, git, jdk, python3, vim/emacs, sshd |
 | `02-nis-nfs` | NIS client → whale (`waxlab`, ypserver 136.244.170.66), NFS `/home/CS_data`, nsswitch |
 | `03-scheme` | `pcs` (Petite Chez Scheme 8.4) + `swl` (Scheme Widget Library 1.3) + bundled 32-bit libs |
 | `04-xpilot-ai` | xpilot-ai game + C/Java/Python/Racket bot bindings, on PATH |
 | `05-editors-tools` | VS Code, Sublime Text, Wireshark (+lab files), Racket/DrRacket |
 
-## After provisioning — validate before cloning to the fleet
-```bash
-id <student>                 # NIS lookup works
-ls /home/CS_data/students    # NFS home mounted
-swl                          # SWL GUI window opens (needs a display)
-xpilots --help               # xpilot-ai runs
-racket --version ; drracket  # Racket/DrRacket
-```
+## Why 24.04
+NIS/YP client, NFS, chezscheme, and racket are all in noble; new hardware needs the long support
+window (to 2029/2036 vs 22.04's April 2027). The 32-bit libs the old Scheme stack links (Tcl/Tk
+8.5, ncurses5) are dropped from noble, so they're **bundled here** — `swl`/`pcs` work on 24.04
+identically to 22.04. NIS is deprecated (whale AD migration planned); 24.04 is the last comfortable
+LTS for a NIS client.
 
 ## Known follow-ups (not automated)
 - **HTCondor worker join** — 17 of these run as Condor workers outside class. Pool config +
