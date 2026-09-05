@@ -7,10 +7,13 @@ need_root
 
 log "32-bit base libs from the distro (libc/libm/librt/libdl + X11)"
 apt-get update -y
-apt_install libc6:i386 libx11-6:i386 libxext6:i386
+apt_install libc6-i386 libc6:i386 libx11-6:i386 libxext6:i386
 
+# The deb was repacked to drop the obsolete libncurses5/libtinfo5 package deps (noble
+# has neither; we ship those .so files ourselves below). Do NOT run apt-get -f install
+# on failure — it would remove petite to "resolve" a phantom dep.
 log "install pcs (Petite Chez Scheme 8.4)"
-dpkg -i "$SOFTWARE/petitechezscheme_8.4-2_all.deb" || apt-get -f install -y
+dpkg -i "$SOFTWARE/petitechezscheme_8.4-2_all.deb" || warn "petite dpkg failed — check libc6-i386"
 
 log "deploy swl (Scheme Widget Library 1.3) tree + wrapper"
 tar xzf "$SOFTWARE/nlh214-scheme.tgz" -C /

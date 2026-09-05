@@ -5,9 +5,13 @@ Wants=network-online.target
 ConditionPathExists=!/var/lib/nlh214-provisioned
 
 [Service]
-Type=oneshot
+Type=exec
 ExecStart=/opt/nlh214-refresh/autoinstall/firstboot/run-provision.sh
-RemainAfterExit=yes
+# network-online.target fires before campus DHCP/DNS is really usable; run-provision.sh
+# waits internally, and if it still fails, retry rather than give up until provisioned.
+Restart=on-failure
+RestartSec=60
+StartLimitIntervalSec=0
 
 [Install]
 WantedBy=multi-user.target

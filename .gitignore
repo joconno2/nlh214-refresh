@@ -5,3 +5,4 @@
 autoinstall/pool/*.deb
 autoinstall/iso/*.iso
 autoinstall/iso/
+software/x/

@@ -6,6 +6,14 @@ LOG=/var/log/nlh214-firstboot.log
 exec > >(tee -a "$LOG") 2>&1
 echo "=== nlh214 first-boot provision $(date -Is) ==="
 
+# network-online.target can fire before campus DHCP/DNS is usable. Wait until apt can
+# actually reach the archive (up to ~5 min) so provisioning doesn't fail on empty lists.
+echo "waiting for network + apt reachability..."
+for i in $(seq 1 30); do
+  if apt-get update -y >/dev/null 2>&1; then echo "apt reachable after ${i} tries"; break; fi
+  sleep 10
+done
+
 # One USB images the whole lab, so every clone boots with the same baked hostname.
 # Self-name uniquely from the machine serial (fallback: MAC) before touching NIS/NFS.
 current="$(hostname)"
