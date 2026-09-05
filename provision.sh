@@ -27,5 +27,6 @@ run 02-nis-nfs.sh
 run 03-scheme.sh
 run 04-xpilot-ai.sh
 run 05-editors-tools.sh
+run 06-admins.sh
 
-log "done. verify: id <student> ; ls $NFS_MOUNT/students ; swl ; xpilots --help"
+log "done. verify: id <student> ; ls $NFS_MOUNT/students ; swl ; xpilots --help ; sudo -lU dgezgin"
