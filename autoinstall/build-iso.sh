@@ -44,12 +44,12 @@ sed -i '0,/^set timeout=.*/s//set timeout=5/' "$GRUB" || true
 
 echo "[+] repacking -> $OUT"
 mkdir -p "$(dirname "$OUT")"
+rm -f "$OUT"                       # xorriso -outdev won't clobber an existing file
 xorriso -indev "$BASE" -outdev "$OUT" \
   -boot_image any replay \
   -map "$WORK/iso/nocloud" /nocloud \
   -map "$WORK/iso/nlh214-refresh" /nlh214-refresh \
-  -map "$GRUB" /boot/grub/grub.cfg \
-  >/dev/null 2>&1
+  -map "$GRUB" /boot/grub/grub.cfg
 
 echo "[+] done: $OUT ($(du -h "$OUT" | cut -f1))"
 echo "    write to USB:  sudo dd if=$OUT of=/dev/sdX bs=4M status=progress oflag=sync"
