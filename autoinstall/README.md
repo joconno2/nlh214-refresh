@@ -13,17 +13,12 @@ Unattended Ubuntu 24.04.3 Desktop image for the **MSI Aegis ZS2 C9NVV-1277US** f
 - then runs the full lab provisioner (NIS/NFS/swl/pcs/xpilot/editors) on **first boot** once
   the machine is on the campus network.
 
-## Build it (on cachy)
+## Build it (any Linux box with docker + xorriso)
+Easiest: `../build.sh` from the repo root does all of this. Piecemeal:
 ```bash
-# 1. harvest the driver pool (needs network + docker; ~1-1.5 GB)
-./fetch-offline-debs.sh
-
-# 2. download an Ubuntu 24.04.3 Desktop ISO into iso/  (base image)
-
-# 3. remaster
-./build-iso.sh iso/ubuntu-24.04.3-desktop-amd64.iso NL214-Lin01
-
-# 4. write to USB
+./fetch-iso.sh                 # download + SHA256-verify the base ISO into iso/
+./fetch-offline-debs.sh        # harvest the driver pool via docker (~1.3 GB)
+./build-iso.sh iso/ubuntu-24.04.4-desktop-amd64.iso nlh214-box
 sudo dd if=iso/nlh214-autoinstall.iso of=/dev/sdX bs=4M status=progress oflag=sync
 ```
 

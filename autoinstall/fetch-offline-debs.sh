@@ -7,6 +7,9 @@ HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 POOL="$HERE/pool"
 mkdir -p "$POOL"
 
+command -v docker >/dev/null || { echo "[x] docker required (harvests a noble-matched pool). Install Docker and retry."; exit 1; }
+docker info >/dev/null 2>&1 || { echo "[x] docker daemon not reachable — start it or add your user to the docker group."; exit 1; }
+
 # Everything the GA kernel can't provide for the Aegis ZS2. Extras (r8126-dkms) are
 # best-effort — the container skips any not in noble.
 PKGS="linux-oem-24.04d linux-firmware dkms build-essential \

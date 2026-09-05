@@ -11,14 +11,16 @@ LAN + Wi-Fi). Target OS: **Ubuntu 24.04.4 LTS**, whole-disk (wipes the preloaded
 
 ## Install a machine (the USB workflow)
 
-**1. Build the USB image** (on cachy, one time):
+**1. Build the USB image** — one command, on **any Linux box** with `docker` + `xorriso`
+(not tied to any particular machine):
 ```bash
-cd autoinstall
-./fetch-offline-debs.sh                                   # harvest driver pool (~1.3G, needs docker)
-# download an Ubuntu 24.04.4 Desktop ISO into autoinstall/iso/
-./build-iso.sh iso/ubuntu-24.04.4-desktop-amd64.iso nlh214-box
+git clone https://github.com/joconno2/nlh214-refresh && cd nlh214-refresh
+./build.sh                          # fetches ISO, harvests driver pool, remasters image
 # -> autoinstall/iso/nlh214-autoinstall.iso  (~7.5G)
 ```
+`build.sh` runs a preflight that names any missing tools and the install command for your
+distro. Prereqs: `docker xorriso curl openssl rsync coreutils`. The steps also run standalone
+(`autoinstall/fetch-iso.sh`, `fetch-offline-debs.sh`, `build-iso.sh`) if you want them piecemeal.
 
 **2. Write it to a USB** (≥16GB stick):
 ```bash
