@@ -57,7 +57,9 @@ the FY22 fleet 2026-09-03 — see [BUILD.md](BUILD.md).
 | `02-nis-nfs` | NIS client → whale (`waxlab`, ypserver 136.244.170.66), NFS `/home/CS_data`, nsswitch |
 | `03-scheme` | `pcs` (Petite Chez Scheme 8.4) + `swl` (Scheme Widget Library 1.3) + bundled 32-bit libs |
 | `04-xpilot-ai` | xpilot-ai game + C/Java/Python/Racket bot bindings, on PATH |
-| `05-editors-tools` | VS Code, Sublime Text, Wireshark (+lab files), Racket/DrRacket |
+| `05-editors-tools` | VS Code, Sublime, Wireshark (+lab files), Racket/DrRacket, btop/htop/tmux/tree/valgrind/cmake/clang/net-tools |
+| `06-admins` | grants sudo to lab admins (NIS users, e.g. `dgezgin`) via sudoers.d |
+| `07-ides` | Eclipse + PyCharm Community (snap, classic) |
 
 ## Why 24.04
 NIS/YP client, NFS, chezscheme, and racket are all in noble; new hardware needs the long support

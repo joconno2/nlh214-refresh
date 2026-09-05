@@ -28,7 +28,8 @@ echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-s
 apt-get update -y
 log "install editors + tools"
 DEBIAN_FRONTEND=noninteractive apt_install code sublime-text \
-  wireshark racket
+  wireshark racket \
+  btop htop tmux tree valgrind cmake clang zip unzip net-tools
 
 log "deploy wireshark-lab demo files"
 if [ -d "$REPO/files/wireshark-lab" ]; then
