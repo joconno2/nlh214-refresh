@@ -37,3 +37,13 @@ mount -a || warn "mount -a failed — verify whale is reachable and exporting $N
 log "verify NIS"
 ypwhich 2>/dev/null && ypcat passwd 2>/dev/null | head -1 >/dev/null \
   && log "NIS bound to $(ypwhich)" || warn "NIS not bound yet"
+
+# Snaps + non-standard NFS homes: strict snaps (Firefox is shipped by default) are
+# AppArmor-confined to /home/<user> and BREAK when homes live under /home/CS_data/...
+# — this is the classic "snap won't launch for NIS students" failure. Tell snapd where
+# the real home roots are so it regenerates AppArmor with those paths in @{HOMEDIRS}.
+if command -v snap >/dev/null; then
+  log "snap homedirs -> NFS home roots (so strict snaps work for NIS logins)"
+  snap set system homedirs=/home/CS_data/students,/home/CS_data/collaborator \
+    || warn "snap homedirs not set — strict snaps (Firefox) may fail for NIS users"
+fi
