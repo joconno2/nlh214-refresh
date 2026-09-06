@@ -6,7 +6,7 @@ need_root
 log "VS Code repo (Microsoft)"
 install -d -m 0755 /usr/share/keyrings
 curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
-  | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+  | gpg --dearmor --batch --yes -o /usr/share/keyrings/microsoft.gpg
 cat > /etc/apt/sources.list.d/vscode.sources <<'EOF'
 Types: deb
 URIs: https://packages.microsoft.com/repos/code

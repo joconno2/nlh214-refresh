@@ -24,8 +24,24 @@ timedatectl set-timezone "$TIMEZONE" || ln -sf "/usr/share/zoneinfo/$TIMEZONE" /
 log "enable i386 multiarch (needed by the Scheme stack)"
 dpkg --add-architecture i386
 
-log "apt update"
+# A fresh boot runs unattended-upgrades + apt-daily, which grab the dpkg lock and
+# half-apply the pending point-release updates — racing this provisioner and leaving
+# packages unconfigured. Quiesce them (this boot only; timers re-arm next boot) and wait
+# for the lock before touching apt.
+log "quiesce background apt (unattended-upgrades / apt-daily)"
+systemctl stop unattended-upgrades.service apt-daily.service apt-daily-upgrade.service \
+  apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true
+for _ in $(seq 1 90); do fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break; sleep 2; done
+dpkg --configure -a 2>/dev/null || true
+
+# A fresh ISO pins base packages at the ISO's versions while the archive has newer
+# point-release deps (e.g. keyboard-configuration 1.226ubuntu1 vs .1), so installs fail
+# with "X depends Y (= old) but new is to be installed". full-upgrade moves the held base
+# packages + their deps together and clears the skew (phased updates included).
+log "apt update + full-upgrade"
 apt-get update -y
+DEBIAN_FRONTEND=noninteractive apt-get -y -f install || true
+DEBIAN_FRONTEND=noninteractive apt-get -y -o APT::Get::Always-Include-Phased-Updates=true full-upgrade
 
 log "dev toolchain + base tools"
 apt_install build-essential gcc g++ make gdb git curl wget ca-certificates \
