@@ -47,3 +47,26 @@ if command -v snap >/dev/null; then
   snap set system homedirs=/home/CS_data/students,/home/CS_data/collaborator \
     || warn "snap homedirs not set — strict snaps (Firefox) may fail for NIS users"
 fi
+
+# GDM login loop for NIS users (local users fine): two systemd-hardened daemons can't
+# reach NIS. accounts-daemon runs PrivateNetwork + RestrictAddressFamilies=AF_UNIX, and
+# systemd-logind restricts to AF_UNIX/AF_NETLINK — so GDM can't *find* the NIS user
+# (accountsservice) and pam_systemd can't *create the session* (logind), giving a black
+# screen -> back to greeter. Grant both IP sockets so NIS lookups work.
+log "let accounts-daemon + logind reach NIS (fixes GDM login loop for NIS students)"
+install -d /etc/systemd/system/accounts-daemon.service.d /etc/systemd/system/systemd-logind.service.d
+cat > /etc/systemd/system/accounts-daemon.service.d/nis.conf <<'EOF'
+[Service]
+PrivateNetwork=false
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+IPAddressDeny=
+EOF
+cat > /etc/systemd/system/systemd-logind.service.d/nis.conf <<'EOF'
+[Service]
+PrivateNetwork=false
+RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET AF_INET6
+IPAddressDeny=
+EOF
+systemctl daemon-reload
+systemctl restart accounts-daemon 2>/dev/null || true
+systemctl restart systemd-logind 2>/dev/null || warn "logind restart deferred to next boot"
