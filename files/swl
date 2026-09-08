@@ -1,0 +1,8 @@
+#!/bin/sh
+# Script data must match the Tcl/Tk 8.5 binaries loaded by SWL 1.3.
+TCL_LIBRARY=/usr/local/share/nlh214-scheme/tcl8.5
+TK_LIBRARY=/usr/local/share/nlh214-scheme/tk8.5
+SWL_ROOT=/usr/lib/swl1.3/lib
+SWL_LIBRARY=/usr/lib/swl1.3/i3le
+export TCL_LIBRARY TK_LIBRARY SWL_ROOT SWL_LIBRARY
+exec /usr/bin/petite -b /usr/lib/swl1.3/i3le/swl.boot "$@"

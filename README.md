@@ -55,7 +55,7 @@ the FY22 fleet 2026-09-03 — see [BUILD.md](BUILD.md).
 | `00-hwenable` | OEM 6.17 kernel, NVIDIA 580-open, linux-firmware, Realtek dkms (offline-pool aware) |
 | `01-base` | hostname, timezone, i386 multiarch, gcc/g++/make/gdb, git, jdk, python3, vim/emacs, sshd |
 | `02-nis-nfs` | NIS client → whale (`waxlab`, ypserver 136.244.170.66), NFS `/home/CS_data`, nsswitch |
-| `03-scheme` | `pcs` (Petite Chez Scheme 8.4) + `swl` (Scheme Widget Library 1.3) + bundled 32-bit libs |
+| `03-scheme` | `pcs` (Petite Chez Scheme 8.4) + `swl` (Scheme Widget Library 1.3) + bundled 32-bit libs and matching Tcl/Tk 8.5 scripts |
 | `04-xpilot-ai` | xpilot-ai game + C/Java/Python/Racket bot bindings, on PATH |
 | `05-editors-tools` | VS Code, Sublime, Wireshark (+lab files), Racket/DrRacket, btop/htop/tmux/tree/valgrind/cmake/clang/net-tools |
 | `06-admins` | grants sudo to lab admins (NIS users, e.g. `dgezgin`) via sudoers.d |
@@ -64,9 +64,12 @@ the FY22 fleet 2026-09-03 — see [BUILD.md](BUILD.md).
 ## Why 24.04
 NIS/YP client, NFS, chezscheme, and racket are all in noble; new hardware needs the long support
 window (to 2029/2036 vs 22.04's April 2027). The 32-bit libs the old Scheme stack links (Tcl/Tk
-8.5, ncurses5) are dropped from noble, so they're **bundled here** — `swl`/`pcs` work on 24.04
-identically to 22.04. NIS is deprecated (whale AD migration planned); 24.04 is the last comfortable
-LTS for a NIS client.
+8.5, ncurses5) are dropped from noble, so they're **bundled here**, along with the matching
+Tcl/Tk 8.5.19 startup scripts. Module 03 installs the remaining i386 X11 dependencies,
+sets the SWL launcher's library paths, and checks startup files and shared-library
+dependencies. Validate the SWL GUI on a pilot machine before imaging the fleet.
+NIS is deprecated (whale AD migration planned); 24.04 is the last comfortable LTS
+for a NIS client.
 
 ## Known follow-ups (not automated)
 - **HTCondor worker join** — 17 of these run as Condor workers outside class. Pool config +
