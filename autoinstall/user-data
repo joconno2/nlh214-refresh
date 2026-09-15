@@ -35,11 +35,21 @@ autoinstall:
   package_upgrade: false
 
   late-commands:
+    - install -d -m 0700 /target/var/log/nlh214-install
     # copy the whole repo (provisioner + software + offline pool) onto the target
     - mkdir -p /target/opt/nlh214-refresh
     - cp -a /cdrom/nlh214-refresh/. /target/opt/nlh214-refresh/
     # hardware enablement from the offline pool: OEM kernel, NVIDIA 570, firmware, NIC dkms
-    - curtin in-target --target=/target -- bash -c 'OFFLINE_POOL=/opt/nlh214-refresh/autoinstall/pool bash /opt/nlh214-refresh/lib/00-hwenable.sh'
+    - |
+      bash -o pipefail -c '
+        curtin in-target --target=/target -- env OFFLINE_POOL=/opt/nlh214-refresh/autoinstall/pool bash /opt/nlh214-refresh/lib/00-hwenable.sh 2>&1 |
+          tee -a /target/var/log/nlh214-install/hardware.log
+      '
     # arm the first-boot provisioner (runs the lab stack online, on campus)
     - cp /target/opt/nlh214-refresh/autoinstall/firstboot/nlh214-firstboot.service /target/etc/systemd/system/
     - curtin in-target --target=/target -- systemctl enable nlh214-firstboot.service
+    # preserve the live installer logs on the installed disk before reboot
+    - bash /cdrom/nlh214-refresh/autoinstall/save-install-logs.sh late-commands-complete
+
+  error-commands:
+    - bash /cdrom/nlh214-refresh/autoinstall/save-install-logs.sh installer-error

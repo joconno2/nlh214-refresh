@@ -28,6 +28,26 @@ sudo dd if=iso/nlh214-autoinstall.iso of=/dev/sdX bs=4M status=progress oflag=sy
 3. On campus, first boot runs `provision.sh` (see `/var/log/nlh214-firstboot.log`).
 4. Validate: `id <student>`, `ls /home/CS_data/students`, `swl`, `xpilots --help`, `nvidia-smi`.
 
+## Saved installation logs
+
+Each newly built USB saves logs on the installed computer, including on success:
+
+- `/var/log/nlh214-install/live/`: a copy of the live installer's entire `/var/log`,
+  including `installer/` (Subiquity/curtin), cloud-init and package logs.
+- `/var/log/nlh214-install/installer-journal.log`: the live installer's system journal.
+- `/var/log/nlh214-install/hardware.log`: both offline driver-install passes, including errors.
+- `/var/log/nlh214-install/kernel-command-line.txt` and `snapshots.log`: boot options,
+  capture time and whether the lab's late commands completed or an installer error occurred.
+- `/var/log/nlh214-firstboot.log`: lab setup output, apt reachability attempts and each
+  attempt's exit status. Retries append to this file, and success does not delete it.
+
+Use `sudo` to read these logs. The installer snapshot is taken at the end of the late
+commands, before reboot; it does not include later shutdown messages. On an installer
+error, logs are also copied if `/target` is still mounted. If installation fails before
+the target disk is mounted, logs remain only in the live session. These hooks require
+the custom autoinstall configuration to run. Rebuild the ISO and rewrite the USB to
+include this change; existing USB images and installed computers are not updated.
+
 ## Decisions still open
 - **Storage**: defaults to whole-disk Ubuntu (WIPES the preloaded Windows 11). The old lab was
   dual-boot — if that's wanted, switch `storage:` in `user-data` to a manual layout that keeps

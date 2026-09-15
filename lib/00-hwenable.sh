@@ -15,8 +15,9 @@ POOL="${OFFLINE_POOL:-}"          # dir of .debs baked onto the USB; empty = use
 # let dpkg topo-sort it — two passes to settle dkms/header ordering.
 if [ -n "$POOL" ] && ls "$POOL"/*.deb >/dev/null 2>&1; then
   log "offline: installing $(ls "$POOL"/*.deb | wc -l) pooled debs via dpkg"
-  dpkg -i "$POOL"/*.deb >/dev/null 2>&1 || true
-  dpkg -i "$POOL"/*.deb 2>&1 | grep -iE "error|depend" | head || true
+  # Keep both passes' full output for the installer's hardware.log.
+  dpkg -i "$POOL"/*.deb || true
+  dpkg -i "$POOL"/*.deb || true
   installed() { dpkg -l "$1" 2>/dev/null | grep -q "^ii"; }
   offline_install() { for p in "$@"; do installed "$p" && return 0; done; warn "not in pool: $*"; return 1; }
 else

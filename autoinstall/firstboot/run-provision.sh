@@ -3,14 +3,17 @@
 set -euo pipefail
 REPO=/opt/nlh214-refresh
 LOG=/var/log/nlh214-firstboot.log
+touch "$LOG"
+chmod 0600 "$LOG"
 exec > >(tee -a "$LOG") 2>&1
+trap 'rc=$?; echo "=== first-boot attempt ended $(date -Is), exit status $rc ==="' EXIT
 echo "=== nlh214 first-boot provision $(date -Is) ==="
 
 # network-online.target can fire before campus DHCP/DNS is usable. Wait until apt can
 # actually reach the archive (up to ~5 min) so provisioning doesn't fail on empty lists.
 echo "waiting for network + apt reachability..."
 for i in $(seq 1 30); do
-  if apt-get update -y >/dev/null 2>&1; then echo "apt reachable after ${i} tries"; break; fi
+  if apt-get update -y; then echo "apt reachable after ${i} tries"; break; fi
   sleep 10
 done
 
